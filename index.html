@@ -1,0 +1,582 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>分数小数比大小</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Noto+Sans+SC:wght@500;700&family=ZCOOL+KuaiLe&display=swap">
+<style>
+/* Layout: grid-paper ground. Header with three part buttons. Stage = [left value | answer box | right value] over [left circle | answer controls | right circle].
+   Left side is orange, right side is blue, so each number, circle and caption share one colour. */
+:root{
+  --paper:#F5F9F7; --grid:#DCE8E2; --card:#FFFFFF; --empty:#F0F5F2;
+  --ink:#1A2340; --ink2:#55607E; --line:#C7D4CE; --edge:#B5C4BD; --ink-edge:#04071A;
+  --a:#F28B2B; --a-ink:#B4500A; --a-soft:#FCE8D3;
+  --b:#2A9BDA; --b-ink:#0C6496; --b-soft:#D9EEFA;
+  --good:#12803F; --good-soft:#DCF2E5; --on-good:#FFFFFF;
+  --bad:#C42B2B; --bad-soft:#FADFDF; --on-bad:#FFFFFF;
+  --on-fill:#14203A;
+  --f-display:"ZCOOL KuaiLe","Fredoka","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  --f-num:"Fredoka","Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --f-body:"Noto Sans SC","PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;
+  --num:clamp(44px,9vw,76px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#10162A; --grid:#1B2440; --card:#192139; --empty:#222C4A;
+    --ink:#EDF1FB; --ink2:#9CA8C8; --line:#2E3A5E; --edge:#0A0F1E; --ink-edge:#6F7CA3;
+    --a:#FF9E45; --a-ink:#FFB46E; --a-soft:#3B2B1B;
+    --b:#3EB4F1; --b-ink:#85CDF7; --b-soft:#14304A;
+    --good:#4BCB8B; --good-soft:#173A2B; --on-good:#0B1A12;
+    --bad:#FF7A7A; --bad-soft:#45202A; --on-bad:#2A0B0B;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#10162A; --grid:#1B2440; --card:#192139; --empty:#222C4A;
+  --ink:#EDF1FB; --ink2:#9CA8C8; --line:#2E3A5E; --edge:#0A0F1E; --ink-edge:#6F7CA3;
+  --a:#FF9E45; --a-ink:#FFB46E; --a-soft:#3B2B1B;
+  --b:#3EB4F1; --b-ink:#85CDF7; --b-soft:#14304A;
+  --good:#4BCB8B; --good-soft:#173A2B; --on-good:#0B1A12;
+  --bad:#FF7A7A; --bad-soft:#45202A; --on-bad:#2A0B0B;
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+body{
+  background-color:var(--paper);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:30px 30px;
+  color:var(--ink);
+  font:500 16px/1.5 var(--f-body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:20px 44px;
+}
+button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
+button:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+
+.wrap{max-width:1160px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+main{display:flex;flex-direction:column;gap:16px}
+
+/* header */
+.top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px 24px}
+.brand{display:flex;align-items:center;gap:12px;min-width:0}
+.logo{width:50px;height:50px;flex:none}
+.lg-e{fill:var(--empty)} .lg-a{fill:var(--a)} .lg-b{fill:var(--b)}
+.lg-o{fill:none;stroke:var(--ink);stroke-width:3;stroke-linejoin:round;stroke-linecap:round}
+h1{margin:0;font:400 clamp(26px,5vw,36px)/1.15 var(--f-display);text-wrap:balance}
+.sub{margin:2px 0 0;color:var(--ink2);font-size:15px}
+.tabs{display:flex;gap:8px;flex:1 1 380px;justify-content:flex-end}
+.tab{flex:1 1 0;min-width:0;max-width:180px;padding:8px 6px 9px;border-radius:16px;border:2px solid var(--line);background:var(--card);box-shadow:0 3px 0 var(--edge);text-align:center;line-height:1.25}
+.tab .pt{display:block;font-size:12px;letter-spacing:.08em;color:var(--ink2)}
+.tab .nm{display:block;font-weight:700;font-size:16px}
+.tab[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--paper);box-shadow:0 3px 0 var(--ink-edge)}
+.tab[aria-pressed="true"] .pt{color:var(--paper);opacity:.8}
+@media (max-width:430px){.tab .nm{font-size:15px}}
+@media (max-width:560px){.tabs{display:grid;grid-template-columns:repeat(2,1fr);flex-basis:100%}.tab{max-width:none}}
+
+/* question head */
+.qhead{display:flex;justify-content:space-between;align-items:baseline;gap:6px 16px;flex-wrap:wrap}
+.qno{font:400 28px/1.2 var(--f-display)}
+.qno small{font:500 16px var(--f-body);color:var(--ink2);margin-left:10px}
+.tally{color:var(--ink2);font-size:15px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.tally b{color:var(--ink);font:600 18px var(--f-num)}
+.restart{border:2px solid var(--line);background:var(--card);border-radius:12px;padding:3px 12px;font-size:14px;font-weight:700;color:var(--ink2)}
+
+/* stage */
+.stage{display:grid;gap:18px 20px;align-items:start;
+  grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);
+  grid-template-areas:"el mid er" "ctl ctl ctl" "pl pl pl" "pr pr pr"}
+@media (min-width:900px){
+  .stage{grid-template-columns:minmax(0,1fr) 250px minmax(0,1fr);grid-template-areas:"el mid er" "pl ctl pr"}
+}
+
+.expr{display:flex;flex-direction:column;align-items:center;gap:8px;min-width:0}
+.expr.left{grid-area:el}
+.expr.right{grid-area:er}
+.left{--side:var(--a);--side-ink:var(--a-ink);--side-soft:var(--a-soft)}
+.right{--side:var(--b);--side-ink:var(--b-ink);--side-soft:var(--b-soft)}
+.pill{display:inline-block;padding:2px 14px;border-radius:999px;background:var(--side-soft);color:var(--side-ink);font-weight:700;font-size:15px;line-height:1.6}
+.expr .main{width:100%;min-height:calc(var(--num)*2.4);display:grid;place-items:center;color:var(--side-ink)}
+.read{color:var(--side-ink);font-size:clamp(15px,2.4vw,20px);font-weight:700}
+
+.frac{display:inline-flex;flex-direction:column;align-items:center;font:600 var(--num)/1 var(--f-num);vertical-align:middle}
+.frac .n{padding:0 .22em .06em;border-bottom:.075em solid currentColor}
+.frac .d{padding:.06em .22em 0}
+.dec{font:600 calc(var(--num)*1.1)/1 var(--f-num)}
+
+.mid{grid-area:mid;justify-self:center;align-self:center;width:clamp(60px,12vw,112px);aspect-ratio:1;max-width:100%;
+  display:grid;place-items:center;border-radius:26px;border:4px dashed var(--line);background:var(--card);
+  font:700 clamp(38px,8vw,68px)/1 var(--f-num);color:var(--ink2)}
+.mid.good{border:4px solid var(--good);background:var(--good-soft);color:var(--good);animation:pop .35s}
+.mid.bad{border:4px solid var(--bad);background:var(--bad-soft);color:var(--bad);animation:pop .35s}
+@keyframes pop{0%{transform:scale(.8)}60%{transform:scale(1.08)}100%{transform:scale(1)}}
+
+/* controls */
+.controls{grid-area:ctl;display:flex;flex-direction:column;gap:14px;min-width:0}
+.choices{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.choice{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:88px;padding:8px 4px;
+  border-radius:20px;border:3px solid var(--line);background:var(--card);box-shadow:0 5px 0 var(--edge);
+  transition:transform .08s,box-shadow .08s,background .15s}
+.choice .sym{font:700 40px/1 var(--f-num)}
+.choice .cap{font-weight:700;font-size:15px;color:var(--ink2)}
+.choice:not(:disabled):active{transform:translateY(4px);box-shadow:0 1px 0 var(--edge)}
+@media (hover:hover){.choice:not(:disabled):hover{border-color:var(--ink)}}
+.choice:disabled{cursor:default}
+.choice.dim{opacity:.45}
+.choice.chosen .cap{color:inherit}
+.choice.chosen.good{background:var(--good);border-color:var(--good);color:var(--on-good)}
+.choice.chosen.bad{background:var(--bad);border-color:var(--bad);color:var(--on-bad)}
+.choice.reveal{border-color:var(--good);box-shadow:0 0 0 4px var(--good-soft),0 5px 0 var(--edge)}
+.choice.reveal .sym,.choice.reveal .cap{color:var(--good)}
+@media (min-width:900px){
+  .choices{grid-template-columns:1fr}
+  .choice{flex-direction:row;gap:16px;min-height:74px}
+  .choice .sym{width:54px;text-align:center}
+  .choice .cap{font-size:20px}
+}
+
+.feedback{min-height:76px;border-radius:18px;padding:10px 14px;display:flex;flex-direction:column;justify-content:center;gap:2px;border:3px solid transparent}
+.feedback.idle{border-color:var(--line);border-style:dashed;color:var(--ink2);font-size:15px;text-align:center;align-items:center}
+.feedback.good{background:var(--good-soft);border-color:var(--good);color:var(--good)}
+.feedback.bad{background:var(--bad-soft);border-color:var(--bad);color:var(--bad)}
+.verdict{display:flex;align-items:center;gap:8px;font:400 30px/1.1 var(--f-display)}
+.verdict svg{flex:none}
+.fix{color:var(--ink);font-weight:700;font-size:16px}
+.fix b{font:700 22px var(--f-num)}
+
+.next{display:flex;align-items:center;justify-content:center;gap:10px;min-height:62px;border-radius:20px;border:3px solid var(--line);
+  background:var(--card);color:var(--ink);font:700 22px var(--f-body);box-shadow:0 5px 0 var(--edge);transition:transform .08s,box-shadow .08s}
+.next:active{transform:translateY(4px);box-shadow:0 1px 0 var(--edge)}
+.next.ready{background:var(--ink);border-color:var(--ink);color:var(--paper);box-shadow:0 5px 0 var(--ink-edge)}
+.next.ready:active{box-shadow:0 1px 0 var(--ink-edge)}
+
+/* circle panels */
+#panel0{grid-area:pl}
+#panel1{grid-area:pr}
+.panel{background:var(--card);border:2px solid var(--line);border-radius:22px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.phead{display:flex;align-items:center;gap:12px;min-height:44px;--num:30px;color:var(--side-ink)}
+.pie{width:100%;max-width:270px;aspect-ratio:1;align-self:center}
+.pie svg{display:block;width:100%;height:100%}
+.slice{fill:var(--empty);stroke:var(--ink);stroke-width:3;stroke-linejoin:round;cursor:pointer;transition:fill .15s;touch-action:manipulation;outline:none}
+@media (hover:hover){.slice:hover{fill:var(--side-soft)}}
+.slice.on,.slice.on:hover{fill:var(--side)}
+.slice:focus-visible{stroke-width:6}
+.lab{font-size:14px;font-weight:700;color:var(--ink2);margin-bottom:6px}
+.chips{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.chip{min-height:44px;border-radius:14px;border:2px solid var(--line);background:var(--card);box-shadow:0 3px 0 var(--edge);font:600 20px var(--f-num)}
+.chip:active{transform:translateY(2px);box-shadow:0 1px 0 var(--edge)}
+.chip[aria-pressed="true"]{background:var(--side);border-color:var(--side);color:var(--on-fill)}
+.prow{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.status{font-size:16px}
+.status b{font:600 20px var(--f-num);color:var(--side-ink)}
+.clear{padding:6px 14px;border-radius:12px;border:2px solid var(--line);background:var(--card);font-weight:700;font-size:14px;box-shadow:0 2px 0 var(--edge)}
+
+/* custom page: editable values */
+.stage.custom{--num:clamp(34px,7vw,64px)}
+.etop{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:8px}
+.seg{display:inline-flex;border:2px solid var(--line);border-radius:999px;overflow:hidden;background:var(--card)}
+.seg button{border:0;background:transparent;padding:2px 14px;font-weight:700;font-size:15px;line-height:1.6;color:var(--ink2)}
+.seg button[aria-pressed="true"]{background:var(--side);color:var(--on-fill)}
+.in{font:inherit;color:var(--side-ink);background:var(--side-soft);border:3px solid transparent;border-radius:16px;text-align:center;width:1.9em;max-width:100%;min-width:0;padding:.04em 0}
+.in:focus{outline:none;border-color:var(--side)}
+.dec-in{font:600 calc(var(--num)*1.1)/1 var(--f-num);width:3.4em}
+
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <svg class="logo" viewBox="0 0 48 48" aria-hidden="true">
+        <circle class="lg-e" cx="24" cy="24" r="21"/>
+        <path class="lg-a" d="M24 24V3A21 21 0 0 1 45 24Z"/>
+        <path class="lg-b" d="M24 24H45A21 21 0 0 1 24 45Z"/>
+        <circle class="lg-o" cx="24" cy="24" r="21"/>
+        <path class="lg-o" d="M24 3V45M3 24H45"/>
+      </svg>
+      <div>
+        <h1>分数小数比大小</h1>
+        <p class="sub">先把圆平均分，再点一点涂色，比一比谁更大。</p>
+      </div>
+    </div>
+    <nav class="tabs" aria-label="选择练习部分">
+      <button type="button" class="tab" data-mode="frac" aria-pressed="true"><span class="pt">第一部分</span><span class="nm">分数比分数</span></button>
+      <button type="button" class="tab" data-mode="dec" aria-pressed="false"><span class="pt">第二部分</span><span class="nm">小数比小数</span></button>
+      <button type="button" class="tab" data-mode="mix" aria-pressed="false"><span class="pt">第三部分</span><span class="nm">分数比小数</span></button>
+      <button type="button" class="tab" data-mode="custom" aria-pressed="false"><span class="pt">第四部分</span><span class="nm">自己出题</span></button>
+    </nav>
+  </header>
+
+  <main>
+    <div class="qhead">
+      <div class="qno"><span id="qno">第 1 题</span><small id="qhint">比一比，哪一边更大？</small></div>
+      <div class="tally"><span id="tally"></span><button type="button" class="restart" id="restart">重新开始</button></div>
+    </div>
+
+    <div class="stage">
+      <div class="expr left" id="exprL"></div>
+      <div class="mid" id="mid" aria-live="polite">?</div>
+      <div class="expr right" id="exprR"></div>
+
+      <div class="controls">
+        <div class="choices" role="group" aria-label="选择答案">
+          <button type="button" class="choice" data-ans=">"><span class="sym">&gt;</span><span class="cap">左边大</span></button>
+          <button type="button" class="choice" data-ans="="><span class="sym">=</span><span class="cap">一样大</span></button>
+          <button type="button" class="choice" data-ans="<"><span class="sym">&lt;</span><span class="cap">右边大</span></button>
+        </div>
+        <div class="feedback idle" id="feedback" role="status" aria-live="polite">点一个答案，这里会显示对错</div>
+        <button type="button" class="next" id="next"><span id="nextLabel">下一题</span>
+          <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 5.5 19.5 12 13 18.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+
+      <section class="panel left" id="panel0" aria-label="左边的圆">
+        <div class="phead" id="head0"></div>
+        <div class="pie" id="pie0"></div>
+        <div>
+          <div class="lab">把圆平均分成几份？</div>
+          <div class="chips" id="chips0" role="group" aria-label="左边的圆分成几份"></div>
+        </div>
+        <div class="prow"><span class="status" id="status0"></span><button type="button" class="clear" data-side="0">清除涂色</button></div>
+      </section>
+
+      <section class="panel right" id="panel1" aria-label="右边的圆">
+        <div class="phead" id="head1"></div>
+        <div class="pie" id="pie1"></div>
+        <div>
+          <div class="lab">把圆平均分成几份？</div>
+          <div class="chips" id="chips1" role="group" aria-label="右边的圆分成几份"></div>
+        </div>
+        <div class="prow"><span class="status" id="status1"></span><button type="button" class="clear" data-side="1">清除涂色</button></div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<script>
+/* GEN-START */
+const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const frac=(n,d)=>({type:'frac',n:n,d:d});
+const dec=k=>({type:'dec',n:k,d:10,text:'0.'+k});
+function cmp(a,b){const x=a.n*b.d,y=b.n*a.d;return x>y?'>':x<y?'<':'=';}
+
+function genFrac(){
+  const r=Math.random();
+  if(r<0.12){ // equivalent fractions, e.g. 1/2 and 3/6
+    const d0=rnd(2,5),n0=rnd(1,d0-1),ks=[];
+    for(let k=2;k*d0<=10;k++)ks.push(k);
+    const k=pick(ks),a=frac(n0,d0),b=frac(n0*k,d0*k);
+    return Math.random()<0.5?[a,b]:[b,a];
+  }
+  if(r<0.47){ // same denominator
+    const d=rnd(3,10);let n1=rnd(1,d-1),n2;
+    do{n2=rnd(1,d-1);}while(n2===n1);
+    return [frac(n1,d),frac(n2,d)];
+  }
+  if(r<0.77){ // same numerator
+    const n=rnd(1,8);let d1=rnd(n+1,10),d2;
+    do{d2=rnd(n+1,10);}while(d2===d1);
+    return [frac(n,d1),frac(n,d2)];
+  }
+  let a,b; // different numerator and denominator
+  do{
+    const d1=rnd(2,10),d2=rnd(2,10);
+    a=frac(rnd(1,d1-1),d1);b=frac(rnd(1,d2-1),d2);
+  }while(cmp(a,b)==='=');
+  return [a,b];
+}
+
+function genDec(){
+  const a=rnd(1,9);let b;
+  do{b=rnd(1,9);}while(b===a);
+  return [dec(a),dec(b)];
+}
+
+function genMix(){
+  const r=Math.random();let f,k;
+  if(r<0.2){ // equal, e.g. 1/2 and 0.5
+    const d=pick([2,5,10]),n=rnd(1,d-1);
+    f=frac(n,d);k=n*10/d;
+  }else if(r<0.55){ // close in size
+    do{
+      const d=rnd(2,10);f=frac(rnd(1,d-1),d);
+      const near=Math.round(f.n*10/f.d);
+      k=Math.min(9,Math.max(1,near+pick([-1,0,1])));
+    }while(cmp(f,dec(k))==='=');
+  }else{
+    do{const d=rnd(2,10);f=frac(rnd(1,d-1),d);k=rnd(1,9);}while(cmp(f,dec(k))==='=');
+  }
+  return Math.random()<0.5?[f,dec(k)]:[dec(k),f];
+}
+/* GEN-END */
+
+/* LOGIC-START */
+const NUMS=['零','一','二','三','四','五','六','七','八','九','十'];
+const label=x=>x.type==='frac'?x.n+'/'+x.d:x.text;
+function cnInt(n){
+  if(n<=10)return NUMS[n];
+  if(n<20)return '十'+NUMS[n-10];
+  return NUMS[Math.floor(n/10)]+'十'+(n%10?NUMS[n%10]:'');
+}
+function reading(x){
+  if(x.type==='frac')return cnInt(x.d)+'分之'+cnInt(x.n);
+  const p=x.text.split('.');
+  return cnInt(+p[0])+(p[1]?'点'+p[1].split('').map(c=>NUMS[+c]).join(''):'');
+}
+function parseSide(c){
+  if(c.type==='frac'){
+    if(!/^\d{1,2}$/.test(c.n)||!/^\d{1,2}$/.test(c.d))return null;
+    return +c.d>=1?frac(+c.n,+c.d):null;
+  }
+  const v=c.v;
+  if(v===''||!/^\d{0,2}(\.\d{1,2})?$/.test(v))return null;
+  const p=v.split('.'),ip=String(parseInt(p[0]||'0',10)),fp=p[1]||'';
+  return {type:'dec',n:parseInt(ip+fp,10),d:Math.pow(10,fp.length),text:ip+(fp?'.'+fp:'')};
+}
+/* LOGIC-END */
+
+const SYM={'>':'&gt;','<':'&lt;','=':'='};
+const WORD={'>':'左边大','=':'一样大','<':'右边大'};
+const GEN={frac:genFrac,dec:genDec,mix:genMix};
+const $=id=>document.getElementById(id);
+const blank=()=>[{n:1,filled:new Set()},{n:1,filled:new Set()}];
+const modes={};
+['frac','dec','mix','custom'].forEach(m=>{modes[m]={q:null,answered:false,choice:null,qno:1,done:0,right:0,recent:[],sides:blank()};});
+modes.custom.cfg=[{type:'frac',n:'3',d:'5',v:'0.6'},{type:'dec',n:'1',d:'2',v:'0.5'}];
+modes.custom.vals=[null,null];
+let mode='frac';
+const isCustom=()=>mode==='custom';
+const stage=document.querySelector('.stage');
+
+function valHTML(x){
+  if(!x)return '<span class="dec" aria-hidden="true">?</span>';
+  return x.type==='frac'
+    ?'<span class="frac" role="img" aria-label="'+reading(x)+'"><span class="n">'+x.n+'</span><span class="d">'+x.d+'</span></span>'
+    :'<span class="dec" role="img" aria-label="'+reading(x)+'">'+x.text+'</span>';
+}
+
+function newQuestion(){
+  const M=modes[mode];let pair,key,rev,t=0;
+  do{
+    pair=GEN[mode]();
+    key=label(pair[0])+'|'+label(pair[1]);
+    rev=label(pair[1])+'|'+label(pair[0]);
+    t++;
+  }while((M.recent.includes(key)||M.recent.includes(rev))&&t<40);
+  M.recent.push(key);if(M.recent.length>8)M.recent.shift();
+  M.q={left:pair[0],right:pair[1],ans:cmp(pair[0],pair[1])};
+  M.answered=false;M.choice=null;M.sides=blank();
+}
+
+/* custom page */
+function recomputeCustom(){
+  const M=modes.custom;
+  M.vals=M.cfg.map(parseSide);
+  M.q=(M.vals[0]&&M.vals[1])?{left:M.vals[0],right:M.vals[1],ans:cmp(M.vals[0],M.vals[1])}:null;
+  M.answered=false;M.choice=null;M.sides=blank();
+}
+function sideVal(s){
+  const M=modes[mode];
+  return isCustom()?M.vals[s]:(s?M.q.right:M.q.left);
+}
+function editHTML(s){
+  const c=modes.custom.cfg[s],nm=s?'右边':'左边';
+  const top='<div class="etop"><span class="pill">'+nm+'</span><div class="seg" role="group" aria-label="'+nm+'是分数还是小数">'
+    +'<button type="button" data-s="'+s+'" data-t="frac" aria-pressed="'+(c.type==='frac')+'">分数</button>'
+    +'<button type="button" data-s="'+s+'" data-t="dec" aria-pressed="'+(c.type==='dec')+'">小数</button></div></div>';
+  const inp=(id,f,val,im,max,lab,cls)=>'<input class="in'+(cls?' '+cls:'')+'" id="'+id+'" data-s="'+s+'" data-f="'+f+'" inputmode="'+im+'" maxlength="'+max+'" autocomplete="off" aria-label="'+lab+'" value="'+val+'">';
+  const body=c.type==='frac'
+    ?'<span class="frac"><span class="n">'+inp('in-n'+s,'n',c.n,'numeric',2,nm+'的分子')+'</span><span class="d">'+inp('in-d'+s,'d',c.d,'numeric',2,nm+'的分母')+'</span></span>'
+    :inp('in-v'+s,'v',c.v,'decimal',5,nm+'的小数','dec-in');
+  return top+'<div class="main">'+body+'</div><div class="read" id="read'+s+'"></div>';
+}
+function updateReads(){
+  const M=modes.custom;
+  [0,1].forEach(s=>{const el=$('read'+s);if(el)el.textContent=M.vals[s]?reading(M.vals[s]):'';});
+}
+
+/* circle drawing */
+function slicePath(i,n){
+  const r=92,c=100,a0=-Math.PI/2+i*2*Math.PI/n,a1=-Math.PI/2+(i+1)*2*Math.PI/n;
+  const f=v=>v.toFixed(2);
+  return 'M'+c+' '+c+' L'+f(c+r*Math.cos(a0))+' '+f(c+r*Math.sin(a0))+' A'+r+' '+r+' 0 0 1 '+f(c+r*Math.cos(a1))+' '+f(c+r*Math.sin(a1))+' Z';
+}
+function pieSVG(n,filled){
+  let body='';
+  if(n===1){
+    const on=filled.has(0);
+    body='<circle class="slice'+(on?' on':'')+'" cx="100" cy="100" r="92" data-i="0" role="button" tabindex="0" aria-pressed="'+on+'" aria-label="整个圆"/>';
+  }else{
+    for(let i=0;i<n;i++){
+      const on=filled.has(i);
+      body+='<path class="slice'+(on?' on':'')+'" d="'+slicePath(i,n)+'" data-i="'+i+'" role="button" tabindex="0" aria-pressed="'+on+'" aria-label="第'+(i+1)+'份"/>';
+    }
+  }
+  return '<svg viewBox="0 0 200 200" role="group" aria-label="圆形，平均分成'+n+'份">'+body+'</svg>';
+}
+
+/* rendering */
+function renderHead(){
+  const M=modes[mode];
+  $('qno').textContent=isCustom()?'自己出题':'第 '+M.qno+' 题';
+  $('qhint').textContent=isCustom()?'选分数或小数，输入数字，比一比哪一边更大。':'比一比，哪一边更大？';
+  $('tally').innerHTML='已做 <b>'+M.done+'</b> 题　答对 <b>'+M.right+'</b> 题';
+  stage.classList.toggle('custom',isCustom());
+  document.querySelectorAll('.tab').forEach(t=>t.setAttribute('aria-pressed',String(t.dataset.mode===mode)));
+}
+function renderCompare(){
+  if(isCustom()){
+    $('exprL').innerHTML=editHTML(0);
+    $('exprR').innerHTML=editHTML(1);
+    updateReads();
+    return;
+  }
+  const q=modes[mode].q;
+  $('exprL').innerHTML='<span class="pill">左边</span><div class="main">'+valHTML(q.left)+'</div><div class="read">'+reading(q.left)+'</div>';
+  $('exprR').innerHTML='<span class="pill">右边</span><div class="main">'+valHTML(q.right)+'</div><div class="read">'+reading(q.right)+'</div>';
+}
+function renderAnswer(){
+  const M=modes[mode],q=M.q;
+  const ok=!!q&&M.answered&&M.choice===q.ans;
+  const mid=$('mid');
+  mid.textContent=M.answered?M.choice:'?';
+  mid.className='mid'+(M.answered?(ok?' good':' bad'):'');
+  document.querySelectorAll('.choice').forEach(b=>{
+    const a=b.dataset.ans;
+    b.disabled=M.answered||!q;
+    b.className='choice';
+    if(M.answered){
+      if(a===M.choice)b.classList.add('chosen',ok?'good':'bad');
+      else if(a===q.ans)b.classList.add('reveal');
+      else b.classList.add('dim');
+    }
+  });
+  const fb=$('feedback');
+  if(!q){
+    fb.className='feedback idle';
+    fb.textContent='先把左右两边的数都填好';
+  }else if(!M.answered){
+    fb.className='feedback idle';
+    fb.textContent='点一个答案，这里会显示对错';
+  }else if(ok){
+    fb.className='feedback good';
+    fb.innerHTML='<div class="verdict"><svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>答对了！</div>';
+  }else{
+    fb.className='feedback bad';
+    fb.innerHTML='<div class="verdict"><svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/></svg>答错了</div><div class="fix">正确答案：<b>'+SYM[q.ans]+'</b>　'+WORD[q.ans]+'</div>';
+  }
+  $('next').className='next'+(M.answered?' ready':'');
+  $('nextLabel').textContent=isCustom()?'再比一次':'下一题';
+}
+function updateStatus(s){
+  const S=modes[mode].sides[s];
+  $('status'+s).innerHTML='分成 <b>'+S.n+'</b> 份　涂了 <b>'+S.filled.size+'</b> 份';
+}
+function renderPanel(s){
+  const S=modes[mode].sides[s];
+  $('head'+s).innerHTML='<span class="pill">'+(s?'右边':'左边')+'</span>'+valHTML(sideVal(s));
+  $('pie'+s).innerHTML=pieSVG(S.n,S.filled);
+  $('chips'+s).querySelectorAll('.chip').forEach(c=>c.setAttribute('aria-pressed',String(+c.dataset.n===S.n)));
+  updateStatus(s);
+}
+function renderAll(){renderHead();renderCompare();renderAnswer();renderPanel(0);renderPanel(1);}
+
+/* events */
+[0,1].forEach(s=>{
+  const chips=$('chips'+s);
+  for(let n=1;n<=10;n++){
+    const b=document.createElement('button');
+    b.type='button';b.className='chip';b.dataset.n=n;b.textContent=n;b.setAttribute('aria-label','分成'+n+'份');
+    chips.appendChild(b);
+  }
+  chips.addEventListener('click',e=>{
+    const b=e.target.closest('.chip');if(!b)return;
+    const S=modes[mode].sides[s],n=+b.dataset.n;
+    if(S.n===n)return;
+    S.n=n;S.filled.clear();renderPanel(s);
+  });
+  const pie=$('pie'+s);
+  const toggle=el=>{
+    const S=modes[mode].sides[s],i=+el.dataset.i;
+    if(S.filled.has(i))S.filled.delete(i);else S.filled.add(i);
+    const on=S.filled.has(i);
+    el.classList.toggle('on',on);el.setAttribute('aria-pressed',String(on));
+    updateStatus(s);
+  };
+  pie.addEventListener('click',e=>{const el=e.target.closest('.slice');if(el)toggle(el);});
+  pie.addEventListener('keydown',e=>{
+    if(e.key!=='Enter'&&e.key!==' ')return;
+    const el=e.target.closest('.slice');if(!el)return;
+    e.preventDefault();toggle(el);
+  });
+});
+document.querySelectorAll('.clear').forEach(b=>b.addEventListener('click',()=>{
+  const s=+b.dataset.side;modes[mode].sides[s].filled.clear();renderPanel(s);
+}));
+document.querySelectorAll('.choice').forEach(b=>b.addEventListener('click',()=>{
+  const M=modes[mode];if(M.answered||!M.q)return;
+  M.answered=true;M.choice=b.dataset.ans;M.done++;
+  if(M.choice===M.q.ans)M.right++;
+  renderHead();renderAnswer();
+  $('next').focus({preventScroll:true});
+}));
+$('next').addEventListener('click',()=>{
+  const M=modes[mode];
+  if(isCustom()){
+    M.answered=false;M.choice=null;M.sides=blank();
+    renderAnswer();renderPanel(0);renderPanel(1);
+    const f=document.querySelector('#exprL .in');if(f)f.focus();
+    return;
+  }
+  M.qno++;newQuestion();renderAll();
+});
+$('restart').addEventListener('click',()=>{
+  const M=modes[mode];M.done=0;M.right=0;
+  if(isCustom()){
+    M.answered=false;M.choice=null;M.sides=blank();
+    renderHead();renderAnswer();renderPanel(0);renderPanel(1);
+    return;
+  }
+  M.qno=1;M.recent=[];newQuestion();renderAll();
+});
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
+  mode=t.dataset.mode;
+  if(!isCustom()&&!modes[mode].q)newQuestion();
+  renderAll();
+}));
+
+/* custom page inputs */
+stage.addEventListener('input',e=>{
+  const el=e.target;if(!el.classList||!el.classList.contains('in'))return;
+  const s=+el.dataset.s,f=el.dataset.f;
+  let v=el.value;
+  if(f==='v'){
+    v=v.replace(/[^\d.]/g,'');
+    const i=v.indexOf('.');
+    if(i>=0)v=v.slice(0,i+1)+v.slice(i+1).replace(/\./g,'');
+  }else v=v.replace(/\D/g,'');
+  if(v!==el.value)el.value=v;
+  modes.custom.cfg[s][f]=v;
+  recomputeCustom();updateReads();renderAnswer();renderPanel(0);renderPanel(1);
+});
+stage.addEventListener('focusin',e=>{
+  const el=e.target;
+  if(el.classList&&el.classList.contains('in'))setTimeout(()=>el.select(),0);
+});
+stage.addEventListener('click',e=>{
+  const b=e.target.closest('.seg button');if(!b)return;
+  const s=+b.dataset.s,t=b.dataset.t,c=modes.custom.cfg[s];
+  if(c.type===t)return;
+  c.type=t;
+  recomputeCustom();renderCompare();renderAnswer();renderPanel(0);renderPanel(1);
+  const f=$(t==='frac'?'in-n'+s:'in-v'+s);if(f)f.focus();
+});
+
+newQuestion();
+recomputeCustom();
+renderAll();
+</script>
+
+</body></html>
